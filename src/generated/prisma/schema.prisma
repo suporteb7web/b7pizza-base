@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id            Int             @id @default(autoincrement())
+  name          String
+  image         String          @default("default.jpg")
+  price         Decimal         @db.Money()
+  ingredients   String?
+  orderProducts OrderProducts[]
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  password String
+  token    String?
+  orders   Order[]
+}
+
+model Order {
+  id        Int         @id @default(autoincrement())
+  userId    Int
+  createdAt DateTime    @default(now())
+  updatedAt DateTime?
+  obs       String?
+  status    OrderStatus @default(INITIALIZED)
+
+  user          User            @relation(fields: [userId], references: [id])
+  orderProducts OrderProducts[]
+}
+
+model OrderProducts {
+  id        Int @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+enum OrderStatus {
+  INITIALIZED
+  IN_REVIEW
+  PAID
+  SENT
+  DELIVERED
+  CANCELED
+}
